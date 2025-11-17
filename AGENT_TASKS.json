@@ -1,0 +1,85 @@
+{
+  "backlog": [
+    {
+      "id": "T-7",
+      "title": "Refactor to Code-Behind: Integrate CastingService",
+      "description": "Move the core logic from MainViewModel directly into the MainPage.xaml.cs code-behind. This includes instantiating the CastingService, exposing its Devices collection, and handling its events for UI updates.",
+      "acceptance_criteria": [
+        "MainPage.xaml.cs creates and owns an instance of CastingService.",
+        "The ListView in MainPage.xaml is populated directly from the CastingService's Devices collection.",
+        "Event handlers in MainPage.xaml.cs are set up to listen for changes from the CastingService."
+      ]
+    },
+    {
+      "id": "T-8",
+      "title": "Refactor to Code-Behind: Implement UI Event Handlers",
+      "description": "Replace all ICommand bindings in MainPage.xaml with direct Click event handlers. Implement the logic for these handlers in MainPage.xaml.cs.",
+      "acceptance_criteria": [
+        "All Command='{Binding ...}' syntax is removed from MainPage.xaml.",
+        "Buttons have Click='...' event handlers.",
+        "The code-behind contains the methods for Start Discovery, Stop Discovery, Connect, and Disconnect button clicks.",
+        "Button clicks successfully call the appropriate methods on the CastingService instance."
+      ]
+    },
+    {
+      "id": "T-9",
+      "title": "Refactor to Code-Behind: Cleanup MVVM Artifacts",
+      "description": "Remove all unnecessary files and folders related to the MVVM pattern to finalize the refactoring.",
+      "acceptance_criteria": [
+        "The ViewModels folder and the MainViewModel.cs file are deleted.",
+        "The Commands folder and the RelayCommand.cs file are deleted.",
+        "The project builds successfully after the removal of the files."
+      ]
+    }
+  ],
+  "archived": [
+    {
+      "id": "T-6",
+      "title": "Implement Device Discovery UI",
+      "description": "Implement the UI to display the list of discovered casting devices. This will involve adding a ListView to the MainPage.xaml and binding it to the Devices collection in the MainViewModel.",
+      "acceptance_criteria": [
+        "A ListView is added to MainPage.xaml to display the list of discovered devices.",
+        "The ListView is bound to the Devices collection in the MainViewModel.",
+        "The device name and status are displayed for each device in the list.",
+        "The UI is updated in real-time as devices are discovered or lost."
+      ]
+    },
+    {
+      "id": "T-3.1",
+      "title": "Refine Connection Management",
+      "description": "Implement a more robust connection status handling, a retry logic with exponential backoff for failed connections, and handle the Picker_CastingDeviceSelected event more gracefully."
+    },
+    {
+      "id": "T-3.2",
+      "title": "Enhance UI/UX",
+      "description": "Provide visual feedback to the user during the connection process, display more detailed information about the connected device, and improve the layout and styling of the device list."
+    },
+    {
+      "id": "T-4",
+      "title": "Implement Manual Retry Controls",
+      "description": "Add a 'Retry' button to the UI for failed connections and implement the logic to manually trigger a reconnection attempt."
+    },
+    {
+      "id": "T-5",
+      "title": "Implement Background Monitoring",
+      "description": "Implement a background task to monitor the connection health and device availability and notify the user of any changes in the connection status."
+    }
+  ],
+  "done": [
+    {
+      "id": "T-1",
+      "title": "Create a new UWP project",
+      "description": "Create a new UWP project in the repository. This will be the new home for the Casting Manager application."
+    },
+    {
+      "id": "T-2",
+      "title": "Port the existing code to the UWP project",
+      "description": "Port the existing code from the WinUI 3 project in the root folder to the new UWP project in the 'CastingManager.UWP' folder. This includes the models, view models, and services. The main pain point to avoid is the confusion between the WinUI 3 and UWP APIs, especially regarding the UI elements and the casting APIs."
+    },
+    {
+      "id": "T-3",
+      "title": "Implement screen casting using the ProjectionManager",
+      "description": "Implement the screen casting feature using the ProjectionManager API in the UWP project. This will involve creating a new service to handle the casting logic and integrating it with the MainViewModel. The main pain point to avoid is the complexity of the ProjectionManager API and the need to handle the different states of the casting session correctly."
+    }
+  ]
+}

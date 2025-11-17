@@ -1,0 +1,44 @@
+# Build artifacts
+bin/
+obj/
+*/bin/
+*/obj/
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.VC.db
+
+# UWP packaging outputs
+AppPackages/
+BundleArtifacts/
+build/
+*.appx
+*.appxbundle
+*.appxsym
+*.appxupload
+
+# Logs and caches
+*.log
+*.tlog
+*.cache
+
+# NuGet / tooling
+packages/
+*.nupkg
+project.lock.json
+PackageRestoreLogs/
+
+# Test artifacts
+TestResults/
+.coverage
+.coveragexml
+
+# OS / IDE cruft
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.DS_Store
+
