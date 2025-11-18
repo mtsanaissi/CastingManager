@@ -21,6 +21,7 @@ namespace CastingManager.UWP
             InitializeComponent();
 
             Suspending += OnSuspending;
+            UnhandledException += App_UnhandledException;
         }
 
         /// <inheritdoc/>
@@ -80,6 +81,12 @@ namespace CastingManager.UWP
 
             // TODO: Save application state and stop any background activity
             deferral.Complete();
+        }
+
+        private void App_UnhandledException(object sender, Windows.UI.Xaml.UnhandledExceptionEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine($"[App] Unhandled exception: {e.Exception.Message}");
+            System.Diagnostics.Debug.WriteLine(e.Exception.StackTrace);
         }
     }
 }

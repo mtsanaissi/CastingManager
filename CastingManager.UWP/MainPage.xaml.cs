@@ -2,6 +2,7 @@ using CastingManager.UWP.Models;
 using CastingManager.UWP.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -12,36 +13,22 @@ namespace CastingManager.UWP
     {
         private readonly ObservableCollection<CastingDeviceModel> _devices = new ObservableCollection<CastingDeviceModel>();
         private CastingService _castingService;
+        public ObservableCollection<CastingDeviceModel> Devices => _devices;
 
         public MainPage()
         {
             InitializeComponent();
             // Subscribe to Loaded first to ensure _castingService is always initialized.
             Loaded += MainPage_Loaded;
+            _devices.CollectionChanged += Devices_CollectionChanged;
 
-            try
-            {
-                if (DeviceListView == null)
-                {
-                    Debug.WriteLine("DeviceListView is null!");
-                    return;
-                }
-
-                Debug.WriteLine("About to set ItemsSource...");
-                DeviceListView.ItemsSource = _devices;
-                Debug.WriteLine("ItemsSource set successfully");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Exception: {ex.GetType().Name}: {ex.Message}");
-                Debug.WriteLine($"StackTrace: {ex.StackTrace}");
-            }
+            UpdateDeviceSummary();
         }
 
-        private void MainPage_Loaded(object sender, RoutedEventArgs e)
+        private async void MainPage_Loaded(object sender, RoutedEventArgs e)
         {
             _castingService = new CastingService(_devices);
-            // Discovery is now started here, after the service is created.
+            await _castingService.EnsureDevicesLoadedAsync();
             _castingService.StartDiscovery();
         }
 
@@ -50,8 +37,9 @@ namespace CastingManager.UWP
             _castingService.ShowPicker(new Windows.Foundation.Rect(0, 0, 10, 10));
         }
 
-        private void StartDiscoveryButton_Click(object sender, RoutedEventArgs e)
+        private async void StartDiscoveryButton_Click(object sender, RoutedEventArgs e)
         {
+            await _castingService.EnsureDevicesLoadedAsync();
             _castingService.StartDiscovery();
         }
 
@@ -74,6 +62,31 @@ namespace CastingManager.UWP
             {
                 await _castingService.DisconnectFromDeviceAsync(device);
             }
+        }
+
+        private void Devices_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            UpdateDeviceSummary();
+            Debug.WriteLine($"[DeviceList] Change: {e.Action}, Total: {_devices.Count}");
+        }
+
+        private void UpdateDeviceSummary()
+        {
+            if (DeviceSummaryText != null)
+            {
+                DeviceSummaryText.Text = $"Devices: {_devices.Count}";
+            }
+
+            if (EmptyStateText != null && DeviceListView != null)
+            {
+                EmptyStateText.Visibility = _devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+                DeviceListView.Visibility = _devices.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+            }
+        }
+
+        private void DeviceListView_Loaded(object sender, RoutedEventArgs e)
+        {
+            Debug.WriteLine("[DeviceList] ListView loaded");
         }
     }
 }

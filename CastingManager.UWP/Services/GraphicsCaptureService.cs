@@ -25,6 +25,8 @@ namespace CastingManager.UWP.Services
 
         public async Task<MediaStreamSource?> PickAndCaptureAsync()
         {
+            StopCapture();
+
             var picker = new GraphicsCapturePicker();
             _captureItem = await picker.PickSingleItemAsync();
 
@@ -79,6 +81,16 @@ namespace CastingManager.UWP.Services
 
         public void StopCapture()
         {
+            if (_mediaStreamSource != null)
+            {
+                _mediaStreamSource.SampleRequested -= OnSampleRequested;
+            }
+
+            if (_framePool != null)
+            {
+                _framePool.FrameArrived -= OnFrameArrived;
+            }
+
             _framePool?.Dispose();
             _session?.Dispose();
             _captureItem = null;

@@ -1,3 +1,4 @@
-I have successfully ported the existing code from the WinUI 3 project to the new UWP project. The UWP project now builds successfully. I have also implemented the basic device discovery using `DeviceWatcher` and connected the `MainViewModel` to the `MainPage`.
-
-The next step is to complete the implementation of the screen casting feature using the `ProjectionManager` API.
+- The UWP manifest now includes the Miracast/DLNA-related capabilities (internetClientServer, privateNetworkClientServer, wiFiControl, proximity) plus `graphicsCapture` so both DeviceWatcher and screen capture have the permissions they need.
+- The screen-capture casting pipeline grabs the GraphicsCapture permission on the UI thread and reuses the cached CastingSource during retries, eliminating the COMException you hit after selecting a device.
+- CastingService still uses the reusable retry orchestrator plus MSTest coverage to keep the backoff timings deterministic.
+- Next: validate the manifest/capture fixes on real hardware and continue the MVVM clean-up + Projection UX work once casting is stable.

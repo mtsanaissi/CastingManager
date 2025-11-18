@@ -83,10 +83,9 @@ CastingManager/
     <Capability Name="internetClient" />
     <Capability Name="internetClientServer" />
     <Capability Name="privateNetworkClientServer" />
-    <uap:Capability Name="allJoyn" />
+    <uap6:Capability Name="graphicsCapture" />
     <DeviceCapability Name="wiFiControl" />
     <DeviceCapability Name="proximity" />
-    <rescap:Capability Name="wiFiControl" />
 </Capabilities>
 ```
 
@@ -139,6 +138,11 @@ msbuild CastingManager.csproj /p:Configuration=Release /p:Platform=x64 /p:AppxBu
 - **Error Handling**: Clear error messages with retry options
 - **Background Monitoring**: Automatic detection of connection drops
 
+### Automatic Retry Behavior
+- Once you select a receiver (either from the built-in Cast picker or the device list) the app now keeps issuing connection attempts until Windows reports a successful casting session.
+- Retries start with a 3-second delay and grow up to 10 seconds using exponential backoff so flaky Miracast/DLNA receivers get enough time to come online without overwhelming them.
+- Selecting **Disconnect** immediately cancels the retry loop and clears all pending attempts, ensuring the app never retries after a session is established or intentionally stopped.
+
 ## 🔍 Technical Deep Dive
 
 ### DevicePicker Integration Challenge
@@ -152,6 +156,11 @@ var mainViewId = currentView.Id;
 // Start projection from the main view
 await ProjectionManager.StartProjectingAsync(mainViewId, mainViewId);
 ```
+
+### Screen Capture Casting Source
+- A dedicated `GraphicsCaptureService` + `ScreenCastingSourceProvider` pipeline now turns the active display into a reusable `CastingSource`.
+- The capture picker is shown once; subsequent retries reuse the same `MediaPlayer` so the retry loop can fire repeatedly without asking the user for more input.
+- When you press **Disconnect**, the capture session is disposed, ensuring the OS releases any GPU/encoder resources before future sessions.
 
 ### Connection Monitoring Strategy
 - **Timer-based monitoring** every 10 seconds for connection health
@@ -200,6 +209,7 @@ await ProjectionManager.StartProjectingAsync(mainViewId, mainViewId);
 - Ensure TV/display is on and connected to same network
 - Check Windows firewall settings
 - Verify network discovery is enabled in Windows
+- Confirm the app manifest includes the required casting capabilities (`internetClientServer`, `privateNetworkClientServer`, `wiFiControl`, `proximity`) plus the `graphicsCapture` capability for screen casting. Deploying an outdated manifest will prevent `DeviceWatcher` from enumerating your Miracast/DLNA receivers or block the capture picker entirely.
 
 **"Connection failed"**
 - Restart the target device
@@ -210,6 +220,10 @@ await ProjectionManager.StartProjectingAsync(mainViewId, mainViewId);
 - Run Visual Studio as Administrator
 - Check that all required capabilities are in manifest
 - Verify Windows 11 SDK is properly installed
+
+**"App crashes after selecting a casting device"**
+- Accept the Graphics Capture permission prompt that appears the first time you connect; the retry loop depends on that capture session.
+- If permission was denied (or the picker was dismissed), press **Connect** again—the latest build now surfaces a friendly error instead of crashing and will re-request permission on the UI thread.
 
 ### Debug Logging
 The application includes comprehensive debug logging accessible via Visual Studio output window:

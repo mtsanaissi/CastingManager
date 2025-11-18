@@ -72,6 +72,7 @@ namespace CastingManager.UWP.Models
                     OnPropertyChanged(nameof(IsConnected));
                     OnPropertyChanged(nameof(IsConnectable));
                     OnPropertyChanged(nameof(CanRetry));
+                    OnPropertyChanged(nameof(CanDisconnect));
                 }
             }
         }
@@ -118,6 +119,7 @@ namespace CastingManager.UWP.Models
                     _isRetrying = value;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(StatusText));
+                    OnPropertyChanged(nameof(CanDisconnect));
                 }
             }
         }
@@ -179,6 +181,8 @@ namespace CastingManager.UWP.Models
                                !string.IsNullOrEmpty(_errorMessage);
 
         public bool HasError => !string.IsNullOrEmpty(_errorMessage);
+
+        public bool CanDisconnect => IsConnected || _isRetrying;
 
         public string StatusText
         {
