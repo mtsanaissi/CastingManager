@@ -22,14 +22,16 @@ namespace CastingManager.UWP.Models
         private int _retryAttempts = 0;
         private string _errorMessage = string.Empty;
         private double _signalStrength = 0.0;
+        private bool _isVideoCapable = true;
 
-        public CastingDeviceModel(DeviceInformation deviceInfo, CastingDevice? castingDevice = null)
+        public CastingDeviceModel(DeviceInformation deviceInfo, CastingDevice? castingDevice = null, bool isVideoCapable = true)
         {
             _deviceInfo = deviceInfo ?? throw new ArgumentNullException(nameof(deviceInfo));
             _castingDevice = castingDevice;
             DeviceId = deviceInfo.Id;
             DeviceName = deviceInfo.Name;
             LastSeen = DateTime.Now;
+            _isVideoCapable = isVideoCapable;
             
             // Parse device capabilities from properties
             ParseDeviceCapabilities();
@@ -172,9 +174,24 @@ namespace CastingManager.UWP.Models
         // Computed Properties
         public bool IsConnected => _connectionState == CastingConnectionState.Connected;
         
+        public bool IsVideoCapable
+        {
+            get => _isVideoCapable;
+            set
+            {
+                if (_isVideoCapable != value)
+                {
+                    _isVideoCapable = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsConnectable));
+                }
+            }
+        }
+
         public bool IsConnectable => _castingDevice != null && 
                                    _connectionState != CastingConnectionState.Connecting &&
-                                   !_isRetrying;
+                                   !_isRetrying &&
+                                   _isVideoCapable;
 
         public bool CanRetry => _connectionState == CastingConnectionState.Disconnected && 
                                !_isRetrying && 

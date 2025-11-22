@@ -1,3 +1,4 @@
+using CastingManager.Core.DeviceFiltering;
 using CastingManager.Core.Retry;
 using CastingManager.UWP.Models;
 using System;
@@ -25,6 +26,7 @@ namespace CastingManager.UWP.Services
         private readonly ScreenCastingSourceProvider _sourceProvider;
         private readonly Dictionary<string, CastingConnection> _activeConnections = new();
         private readonly string _deviceSelector;
+        private static readonly string[] _requestedProperties = new[] { "System.Devices.Aep.Category" };
 
         private DeviceWatcher? _deviceWatcher;
         private CancellationTokenSource? _connectionCts;
@@ -38,6 +40,9 @@ namespace CastingManager.UWP.Services
 
             _picker = new CastingDevicePicker();
             _picker.CastingDeviceSelected += Picker_CastingDeviceSelected;
+            _picker.Filter.SupportsVideo = true;
+            _picker.Filter.SupportsAudio = false;
+            _picker.Filter.SupportsPictures = false;
 
             _deviceSelector = CastingDevice.GetDeviceSelector(CastingPlaybackTypes.Video);
 
@@ -65,7 +70,7 @@ namespace CastingManager.UWP.Services
 
             try
             {
-                var snapshot = await DeviceInformation.FindAllAsync(_deviceSelector);
+                var snapshot = await DeviceInformation.FindAllAsync(_deviceSelector, _requestedProperties);
                 Log($"Initial device snapshot count: {snapshot?.Count ?? 0}");
                 foreach (var device in snapshot)
                 {
@@ -84,7 +89,7 @@ namespace CastingManager.UWP.Services
         {
             if (_deviceWatcher == null)
             {
-                _deviceWatcher = DeviceInformation.CreateWatcher(_deviceSelector);
+                _deviceWatcher = DeviceInformation.CreateWatcher(_deviceSelector, _requestedProperties);
 
                 _deviceWatcher.Added += DeviceWatcher_Added;
                 _deviceWatcher.Removed += DeviceWatcher_Removed;
@@ -116,6 +121,12 @@ namespace CastingManager.UWP.Services
                 return false;
             }
 
+            if (!deviceModel.IsVideoCapable)
+            {
+                deviceModel.ErrorMessage = "Selected device does not support video casting.";
+                return false;
+            }
+
             bool captureReady;
             try
             {
@@ -128,7 +139,8 @@ namespace CastingManager.UWP.Services
 
             if (!captureReady)
             {
-                deviceModel.ErrorMessage = "Screen capture permission denied. Enable Settings > Privacy & security > Screen capture.";
+                var message = _sourceProvider.LastErrorMessage ?? "Screen capture permission denied. Enable Settings > Privacy & security > Screen capture.";
+                deviceModel.ErrorMessage = message;
                 deviceModel.ConnectionState = CastingConnectionState.Disconnected;
                 deviceModel.IsRetrying = false;
                 return false;
@@ -395,6 +407,13 @@ namespace CastingManager.UWP.Services
                 return;
             }
 
+            var isVideoDevice = IsVideoDevice(deviceInfo);
+            if (!CastingDeviceFilter.ShouldInclude(isVideoDevice))
+            {
+                Log($"Skipping non-video device: {deviceInfo.Name} ({deviceInfo.Id})");
+                return;
+            }
+
             CastingDevice? castingDevice = null;
             try
             {
@@ -412,14 +431,30 @@ namespace CastingManager.UWP.Services
                 {
                     existing.UpdateDeviceInfo(deviceInfo);
                     existing.CastingDevice = existing.CastingDevice ?? castingDevice;
+                    existing.IsVideoCapable = isVideoDevice;
                     Log($"Device updated: {deviceInfo.Name} ({deviceInfo.Id})");
                 }
                 else
                 {
-                    Devices.Add(new CastingDeviceModel(deviceInfo, castingDevice));
+                    Devices.Add(new CastingDeviceModel(deviceInfo, castingDevice, isVideoDevice));
                     Log($"Device added: {deviceInfo.Name} ({deviceInfo.Id})");
                 }
             });
+        }
+
+        private static bool IsVideoDevice(DeviceInformation deviceInfo)
+        {
+            if (deviceInfo?.Properties != null &&
+                deviceInfo.Properties.TryGetValue("System.Devices.Aep.Category", out var categoryValue))
+            {
+                var category = categoryValue?.ToString() ?? string.Empty;
+                if (category.IndexOf("audio", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static void Log(string message)

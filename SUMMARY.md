@@ -1,4 +1,4 @@
-- The UWP manifest now includes the Miracast/DLNA-related capabilities (internetClientServer, privateNetworkClientServer, wiFiControl, proximity) plus `graphicsCapture` so both DeviceWatcher and screen capture have the permissions they need.
-- The screen-capture casting pipeline grabs the GraphicsCapture permission on the UI thread and reuses the cached CastingSource during retries, eliminating the COMException you hit after selecting a device.
-- CastingService still uses the reusable retry orchestrator plus MSTest coverage to keep the backoff timings deterministic.
-- Next: validate the manifest/capture fixes on real hardware and continue the MVVM clean-up + Projection UX work once casting is stable.
+- Device discovery now filters out audio-only endpoints using the new `CastingDeviceFilter`, so only video-capable Miracast/DLNA receivers appear in the list or picker; matching MSTest coverage documents the behavior.
+- The screen-capture pipeline verifies platform support + privacy settings via the `graphicsCapture` capability and `GraphicsCaptureSession.IsSupported`, then surfaces permission errors from the capture picker instead of crashing the Direct3D pipeline.
+- CastingService still uses the retry orchestrator, richer logging, and UI empty-state wiring, while Connect is disabled for devices that can’t render video.
+- Next: validate the end-to-end connection on actual TVs/receivers with the Windows “Wireless Display” optional feature enabled, then continue MVVM cleanup + Projection UX once casting is stable.

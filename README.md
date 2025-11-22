@@ -6,6 +6,7 @@ A comprehensive UWP application for Windows 11 that provides enhanced control an
 
 ### Core Functionality
 - **Device Discovery & Enumeration**: Automatically scan and list available casting targets
+- **Smart Filtering**: Only Miracast/DLNA receivers that advertise video playback show up, keeping Bluetooth speakers or audio-only gadgets out of the workflow
 - **Connection Management**: Initiate, monitor, and terminate casting sessions with detailed status
 - **Connection Recovery**: Automatic retry with exponential backoff for failed connections
 - **Enhanced Information Display**: Real-time connection status, quality metrics, and device capabilities
@@ -137,6 +138,7 @@ msbuild CastingManager.csproj /p:Configuration=Release /p:Platform=x64 /p:AppxBu
 - **Real-time Status**: Connection state updates with visual indicators
 - **Error Handling**: Clear error messages with retry options
 - **Background Monitoring**: Automatic detection of connection drops
+- **Permission Awareness**: The UI now surfaces when screen-capture permission or capability checks fail so you can fix the Windows privacy toggle without digging through logs
 
 ### Automatic Retry Behavior
 - Once you select a receiver (either from the built-in Cast picker or the device list) the app now keeps issuing connection attempts until Windows reports a successful casting session.
@@ -210,6 +212,8 @@ await ProjectionManager.StartProjectingAsync(mainViewId, mainViewId);
 - Check Windows firewall settings
 - Verify network discovery is enabled in Windows
 - Confirm the app manifest includes the required casting capabilities (`internetClientServer`, `privateNetworkClientServer`, `wiFiControl`, `proximity`) plus the `graphicsCapture` capability for screen casting. Deploying an outdated manifest will prevent `DeviceWatcher` from enumerating your Miracast/DLNA receivers or block the capture picker entirely.
+- If you only see Bluetooth speakers/headsets, ensure the Windows **Wireless Display** optional feature is installed and enabled—audio-only devices are automatically filtered out now, so no video receivers means the OS isn’t surfacing them.
+- When **Connect** reports “Screen capture permission denied,” flip **Settings → Privacy & security → Screen capture → Let desktop apps access screen capture** to **On**, then retry.
 
 **"Connection failed"**
 - Restart the target device

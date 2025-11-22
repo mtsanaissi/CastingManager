@@ -30,30 +30,40 @@ namespace CastingManager.UWP.Services
             var picker = new GraphicsCapturePicker();
             _captureItem = await picker.PickSingleItemAsync();
 
-            if (_captureItem != null)
+            if (_captureItem != null && _captureItem.Size.Width > 0 && _captureItem.Size.Height > 0)
             {
-                var videoProperties = VideoEncodingProperties.CreateH264();
-                videoProperties.Width = (uint)_captureItem.Size.Width;
-                videoProperties.Height = (uint)_captureItem.Size.Height;
-                videoProperties.Bitrate = 2 * 1024 * 1024; // 2 Mbps
-                videoProperties.FrameRate.Numerator = 30;
-                videoProperties.FrameRate.Denominator = 1;
+                try
+                {
+                    var videoProperties = VideoEncodingProperties.CreateH264();
+                    videoProperties.Width = (uint)_captureItem.Size.Width;
+                    videoProperties.Height = (uint)_captureItem.Size.Height;
+                    videoProperties.Bitrate = 2 * 1024 * 1024; // 2 Mbps
+                    videoProperties.FrameRate.Numerator = 30;
+                    videoProperties.FrameRate.Denominator = 1;
 
-                var videoDescriptor = new VideoStreamDescriptor(videoProperties);
+                    var videoDescriptor = new VideoStreamDescriptor(videoProperties);
 
-                _mediaStreamSource = new MediaStreamSource(videoDescriptor);
-                _mediaStreamSource.SampleRequested += OnSampleRequested;
+                    _mediaStreamSource = new MediaStreamSource(videoDescriptor);
+                    _mediaStreamSource.SampleRequested += OnSampleRequested;
 
-                _framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
-                    _device,
-                    DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                    2,
-                    _captureItem.Size);
+                    _framePool = Direct3D11CaptureFramePool.Create(
+                        _device,
+                        DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                        1,
+                        _captureItem.Size);
 
-                _session = _framePool.CreateCaptureSession(_captureItem);
-                _session.StartCapture();
+                    _framePool.FrameArrived += OnFrameArrived;
 
-                _framePool.FrameArrived += OnFrameArrived;
+                    _session = _framePool.CreateCaptureSession(_captureItem);
+                    _session.IsCursorCaptureEnabled = true;
+                    _session.StartCapture();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Graphics capture failed: {ex.Message}");
+                    StopCapture();
+                    return null;
+                }
             }
 
             return _mediaStreamSource;
