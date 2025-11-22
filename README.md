@@ -1,3 +1,5 @@
+# IT IS NOT WORKING YET :(
+
 # UWP Windows 11 Casting Management Application
 
 A comprehensive UWP application for Windows 11 that provides enhanced control and monitoring of Miracast/DLNA/WiFi Direct connections to TVs and displays, serving as an advanced alternative to the built-in casting service.
